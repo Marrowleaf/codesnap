@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSnap — Beautiful Code Screenshots</title>
+    <meta name="description" content="Create stunning code screenshots. Syntax highlighting, custom themes, and instant exports.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <!-- Nav -->
+    <nav id="navbar">
+        <a href="/" class="logo">📸 CodeSnap</a>
+        <div class="nav-links">
+            <div id="auth-guest">
+                <button class="btn-ghost" onclick="showAuth('login')">Log In</button>
+                <button class="btn-primary" onclick="showAuth('signup')">Sign Up Free</button>
+            </div>
+            <div id="auth-user" style="display:none">
+                <span id="user-email"></span>
+                <span id="pro-badge" style="display:none" class="pro-badge">PRO</span>
+                <button class="btn-ghost" onclick="logout()">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero (shown when not editing) -->
+    <section id="hero">
+        <h1>Beautiful Code Screenshots</h1>
+        <p>Create stunning images of your source code. Perfect for documentation, social media, and presentations.</p>
+        <div class="hero-features">
+            <div class="feat"><span>🎨</span> 20+ Themes</div>
+            <div class="feat"><span>📸</span> PNG Export</div>
+            <div class="feat"><span>💾</span> Save Snippets</div>
+            <div class="feat"><span>🚀</span> No Watermark (Pro)</div>
+        </div>
+        <button class="btn-primary btn-lg" onclick="startEditing()">Get Started — It's Free</button>
+    </section>
+
+    <!-- Editor -->
+    <section id="editor" style="display:none">
+        <div class="editor-layout">
+            <!-- Sidebar Controls -->
+            <aside class="sidebar">
+                <div class="control-group">
+                    <label>Language</label>
+                    <select id="lang-select">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="rust">Rust</option>
+                        <option value="go">Go</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="csharp">C#</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="php">PHP</option>
+                        <option value="swift">Swift</option>
+                        <option value="kotlin">Kotlin</option>
+                        <option value="sql">SQL</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="bash">Bash</option>
+                        <option value="json">JSON</option>
+                        <option value="yaml">YAML</option>
+                        <option value="markdown">Markdown</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Theme</label>
+                    <select id="theme-select">
+                        <option value="monokai">Monokai</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="github-dark">GitHub Dark</option>
+                        <option value="one-dark">One Dark</option>
+                        <option value="nord">Nord</option>
+                        <option value="solarized-dark">Solarized Dark</option>
+                        <option value="tokyo-night">Tokyo Night</option>
+                        <option value="catppuccin">Catppuccin</option>
+                        <option value="gruvbox">Gruvbox</option>
+                        <option value="vscode-dark">VS Code Dark</option>
+                        <option value="ayu-dark">Ayu Dark</option>
+                        <option value="material-darker">Material Darker</option>
+                        <option value="night-owl">Night Owl</option>
+                        <option value="rose-pine">Rosé Pine</option>
+                        <option value="synthwave-84">Synthwave '84</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Background</label>
+                    <div class="bg-options">
+                        <button class="bg-btn active" data-bg="gradient-1" style="background:linear-gradient(135deg,#667eea,#764ba2)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="gradient-2" style="background:linear-gradient(135deg,#f093fb,#f5576c)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="gradient-3" style="background:linear-gradient(135deg,#4facfe,#00f2fe)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="gradient-4" style="background:linear-gradient(135deg,#43e97b,#38f9d7)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="gradient-5" style="background:linear-gradient(135deg,#fa709a,#fee140)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="gradient-6" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="solid-dark" style="background:#1a1a2e" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="solid-blue" style="background:#0f3460" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="photo-1" style="background:url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&q=30) center/cover" onclick="setBg(this)"></button>
+                        <button class="bg-btn" data-bg="photo-2" style="background:url(https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=80&q=30) center/cover" onclick="setBg(this)"></button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Window Style</label>
+                    <select id="window-select">
+                        <option value="macos">macOS</option>
+                        <option value="windows">Windows</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Title Bar</label>
+                    <input type="text" id="title-input" placeholder="untitled" value="index.js">
+                </div>
+
+                <div class="control-group">
+                    <label>Padding</label>
+                    <input type="range" id="padding-range" min="16" max="80" value="40">
+                </div>
+
+                <div class="control-group">
+                    <label>Border Radius</label>
+                    <input type="range" id="radius-range" min="0" max="24" value="12">
+                </div>
+
+                <div class="control-group">
+                    <label>Font Size</label>
+                    <input type="range" id="font-range" min="12" max="24" value="16">
+                </div>
+
+                <div class="control-group">
+                    <label>Line Numbers</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="line-numbers" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <label>Shadow</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="shadow-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="control-group actions">
+                    <button class="btn-primary btn-block" onclick="exportImage()">📸 Export PNG</button>
+                    <button class="btn-ghost btn-block" onclick="copyToClipboard()" id="copy-btn">📋 Copy to Clipboard</button>
+                    <button class="btn-ghost btn-block" onclick="saveSnippet()" id="save-btn">💾 Save Snippet</button>
+                </div>
+            </aside>
+
+            <!-- Preview Area -->
+            <div class="preview-area">
+                <div id="capture-wrapper">
+                    <div id="code-card">
+                        <div id="window-chrome">
+                            <div id="window-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span id="window-title">index.js</span>
+                        </div>
+                        <div id="code-content">
+                            <table id="code-table">
+                                <tbody id="code-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Input (below preview) -->
+        <div class="code-input-wrap">
+            <textarea id="code-input" spellcheck="false" placeholder="Paste or type your code here...">function fibonacci(n) {
+  if (n <= 1) return n;
+  
+  let a = 0, b = 1;
+  for (let i = 2; i <= n; i++) {
+    [a, b] = [b, a + b];
+  }
+  
+  return b;
+}
+
+// Generate first 10 Fibonacci numbers
+const sequence = Array.from(
+  { length: 10 }, 
+  (_, i) => fibonacci(i)
+);
+
+console.log("Fibonacci:", sequence);
+// → Fibonacci: [0,1,1,2,3,5,8,13,21,34]</textarea>
+        </div>
+    </section>
+
+    <!-- Saved Snippets -->
+    <section id="snippets" style="display:none">
+        <div class="container">
+            <h2>💾 Your Saved Snippets</h2>
+            <div id="snippet-grid" class="snippet-grid"></div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing">
+        <div class="container">
+            <h2>Simple Pricing</h2>
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <h3>Free</h3>
+                    <div class="price">£0<span>/mo</span></div>
+                    <ul>
+                        <li>✅ 10 themes</li>
+                        <li>✅ PNG export</li>
+                        <li>✅ Copy to clipboard</li>
+                        <li>❌ Watermark on export</li>
+                        <li>❌ Custom backgrounds</li>
+                        <li>❌ Save snippets</li>
+                    </ul>
+                    <button class="btn-ghost btn-block" onclick="showAuth('signup')">Get Started</button>
+                </div>
+                <div class="price-card featured">
+                    <span class="badge">POPULAR</span>
+                    <h3>Pro</h3>
+                    <div class="price">£4.99<span>/mo</span></div>
+                    <ul>
+                        <li>✅ All 15+ themes</li>
+                        <li>✅ PNG export, no watermark</li>
+                        <li>✅ Copy to clipboard</li>
+                        <li>✅ Custom backgrounds</li>
+                        <li>✅ Photo backgrounds</li>
+                        <li>✅ Save unlimited snippets</li>
+                    </ul>
+                    <button class="btn-primary btn-block" onclick="startCheckout()">Upgrade to Pro</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAuth()">&times;</button>
+            <h2 id="auth-title">Log In</h2>
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <input type="email" id="auth-email" placeholder="Email" required>
+                <input type="password" id="auth-password" placeholder="Password" required minlength="6">
+                <button type="submit" class="btn-primary btn-block" id="auth-submit">Log In</button>
+            </form>
+            <p class="auth-switch">Don't have an account? <a href="#" onclick="toggleAuthMode()">Sign up</a></p>
+            <div id="auth-error" style="display:none" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>📸 CodeSnap — Beautiful code screenshots for developers</p>
+            <p class="footer-sub">Built with ❤️ by <a href="https://github.com/Marrowleaf" target="_blank">James Durrant</a></p>
+        </div>
+    </footer>
+
+    <script src="js/themes.js"></script>
+    <script src="js/highlight.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/stripe.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
